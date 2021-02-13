@@ -23,13 +23,24 @@ using namespace std;
  *         empty string.
  */
 
-/*
+
 static string promptForActor(const string& prompt, const imdb& db)
 {
   string response;
   while (true) {
-    cout << prompt << " [or <enter> to quit]: ";
+    cout << "press enter:";
     getline(cin, response);
+    cout << prompt << " [or <enter> to quit]: ";
+
+    //cout << "....." << endl;
+    getline(cin, response);
+    /*
+    if (response == ""); {
+        cout << "getline didnt work, please enter the name again!" << endl;
+        getline(cin, response);
+    }
+    */
+    cout << "done with getline" << endl;
     if (response == "") return "";
     vector<film> credits;
     if (db.getCredits(response, credits)) return response;
@@ -37,7 +48,56 @@ static string promptForActor(const string& prompt, const imdb& db)
 	 << "Please try again." << endl;
   }
 }
-*/
+
+static void generateShortestPath(string source, string target, imdb& db) {
+    list<path> partialPaths;
+    set<string> previouslySeenActors;
+    set<film> previouslySeenFilms;
+
+    path partialPath(source);
+    partialPaths.push_back(partialPath);
+
+    while (!partialPaths.empty() && partialPaths.front().getLength() <= 5) {
+        path front = partialPaths.front();
+        partialPaths.pop_front();
+        vector<film> credits;
+        db.getCredits(front.getLastPlayer(), credits);
+
+        for (int i = 0; i < credits.size(); ++i) {
+            film movie = credits[i];
+            //cout << i<<" movie: " << movie.title << endl;
+            if (previouslySeenFilms.find(movie)
+                == previouslySeenFilms.end()) {
+                previouslySeenFilms.insert(movie);
+                vector<string> players;
+                db.getCast(movie, players);
+                for (int j = 0; j < players.size(); ++j) {
+                    string player = players[j];
+                    if (previouslySeenActors.find(player) \
+                        == previouslySeenActors.end()) {
+                        previouslySeenActors.insert(player);
+                        path clone = front;
+                        clone.addConnection(movie, player);
+                        if (player == target) {
+                            cout << clone;
+                            return;
+                        }
+                        else {
+                            partialPaths.push_back(clone);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+//***BAHAR
+void printFilms(vector<film> films) {
+    for (unsigned i = 0; i < films.size(); i++) {
+        cout << films[i].title << endl;
+    }
+}
 /**
  * Serves as the main entry point for the six-degrees executable.
  * There are no parameters to speak of.
@@ -53,12 +113,7 @@ static string promptForActor(const string& prompt, const imdb& db)
  * @return 0 if the program ends normally, and undefined otherwise.
  */
 
-//***BAHAR
-void printFilms(vector<film> films){
-  for (unsigned i = 0; i < films.size(); i++) {
-      cout << films[i].title << endl;
- }
-}
+
 
 int main(int argc, const char *argv[])
 {
@@ -77,10 +132,11 @@ int main(int argc, const char *argv[])
     exit(1);
   }
   
-  //printout the number of actors and films in db
+  //printout the total number of actors and films in db
   db.printActorAndMovieCounts();
 
-  //print the a number of actors in the list
+
+  /*
   cout << "--------------Print Actor and Movie Names-------------------" << endl;
   cout << "How many names would you like to see?" << endl;
   int count;
@@ -94,29 +150,49 @@ int main(int argc, const char *argv[])
       db.printMovieNames(count);
       cout << endl;
   }
-
+  */
   //test the getCredits function for "Meryl Streep"
-  cout << "--------------Testing getCredits function-------------------" << endl;
-  const string player = "Meryl Streep";
+  //cout << "--------------Testing getCredits function-------------------" << endl;
+
+  //std::string name;
+  /*
+  std::cout << "Please, enter your full name: ";
+  std::getline(std::cin, name);
+  std::cout << "Hello, " << name << "!\n";
+  */
+  /*
+  cout << "Please enter an artis name:" << endl;
+  //const 
+  string player; //= "Meryl Streep";
+  getline(cin, player);
+  getline(cin, player);
+  //cout << "player" << player;
   vector <film> films;
   db.getCredits(player, films);
   cout << "The number of films of " << player << " = " << films.size() << endl;
   //printFilms(films);
   cout << endl;
-
-
+  */
+  /*
   cout << "--------------Testing getCast function-------------------" << endl;
   film movie;
+  /*
+  string movieTitle;
+  cout << "Please enter a movie name:" << endl;
+  getline(cin, movieTitle);
+  getline(cin, movieTitle);
+  */
+  /*
   movie.title = "Kosher";
   movie.year = 2002;
   vector <string> players;
   db.getCast(movie, players);
   cout << "The number of cast of " << movie.title << " = " << players.size() << endl;
-
+  */
   
   //db.printActorNames(count);
 
-
+ 
 
   /*
   for (int i = 0; i < 400; i += 4)
@@ -128,22 +204,24 @@ int main(int argc, const char *argv[])
   //db.printActorName();
   //***
 
-  /*
   while (true) {
     string source = promptForActor("Actor or actress", db);
+    cout << "source=" << source << endl; 
     if (source == "") break;
     string target = promptForActor("Another actor or actress", db);
     if (target == "") break;
     if (source == target) {
       cout << "Good one.  This is only interesting if you specify two different people." << endl;
-    } else {
+    } 
+    else {
+        cout << "Calling generateShortestPath" << endl;
+      generateShortestPath(source, target, db);
       // replace the following line by a call to your generateShortestPath routine... 
-      cout << endl << "No path between those two people could be found." << endl << endl;
+      //cout << endl << "No path between those two people could be found." << endl << endl;
     }
   }
   
   cout << "Thanks for playing!" << endl;
-   */
   return 0;
 }
 

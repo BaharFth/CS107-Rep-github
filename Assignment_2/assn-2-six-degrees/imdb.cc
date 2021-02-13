@@ -253,7 +253,7 @@ bool imdb::getCredits(const string& player, vector <film>& films) const {
 
 bool imdb::getCast(const film& movie, vector <string>& players) const {
 
-    cout << "Movie is " << movie.title << endl;
+    //cout << "Movie is " << movie.title << endl;
     int nElements = *(int*)movieFile;
 
     struct Key movieKey;
@@ -294,7 +294,7 @@ bool imdb::getCast(const film& movie, vector <string>& players) const {
             name += *nameLetter;
             nameLetter++;
         }
-        cout << "The film name from file is: " << name << endl;
+        //cout << "The film name from file is: " << name << endl;
     }
 
     int numBytesFromStart = 0;

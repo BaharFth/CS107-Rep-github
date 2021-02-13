@@ -1,27 +1,25 @@
-#ifndef _hashset_
-#define _hashset_
+#ifndef __hashset_
+#define __hashset_
 #include "vector.h"
-#include <stddef.h>
-#include <stdint.h>
 
 /* File: hashtable.h
  * ------------------
  * Defines the interface for the hashset.
  */
 
- /**
-  * Type: HashSetHashFunction
-  * -------------------------
-  * Class of function designed to map the figure at the specied
-  * elemAddr to some number (the hash code) between 0 and numBuckets - 1.
-  * The hashing routine must be stable in that the same number must
-  * be returned every single time the same element (where same is defined
-  * in the HashSetCompareFunction sense) is hashed.  Ideally, the
-  * hash routine would manage to distribute the spectrum of client elements
-  * as uniformly over the [0, numBuckets) range as possible.
-  */
+/**
+ * Type: HashSetHashFunction
+ * -------------------------
+ * Class of function designed to map the figure at the specied
+ * elemAddr to some number (the hash code) between 0 and numBuckets - 1.
+ * The hashing routine must be stable in that the same number must
+ * be returned every single time the same element (where same is defined
+ * in the HashSetCompareFunction sense) is hashed.  Ideally, the
+ * hash routine would manage to distribute the spectrum of client elements
+ * as uniformly over the [0, numBuckets) range as possible.
+ */
 
-typedef int (*HashSetHashFunction)(const void* elemAddr, int numBuckets);
+typedef int (*HashSetHashFunction)(const void *elemAddr, int numBuckets);
 
 /**
  * Type: HashSetCompareFunction
@@ -30,7 +28,7 @@ typedef int (*HashSetHashFunction)(const void* elemAddr, int numBuckets);
  * by address.  The HashSetCompareFunction compares these elements and
  * decides whether or not they are logically equal or or.  The
  * return value identifies relative ordering:
- *
+ * 
  *   - A negative return value means that the item addressed by elemAddr1
  *     is less than the item addressed by elemAddr2.  The definition of
  *     'less than' is dictated by the implementation's interpretation of the data.
@@ -40,7 +38,7 @@ typedef int (*HashSetHashFunction)(const void* elemAddr, int numBuckets);
  *     is less that the item addressed by elemAddr1.
  */
 
-typedef int (*HashSetCompareFunction)(const void* elemAddr1, const void* elemAddr2);
+typedef int (*HashSetCompareFunction)(const void *elemAddr1, const void *elemAddr);
 
 /**
  * Type: HashSetMapFunction
@@ -50,7 +48,7 @@ typedef int (*HashSetCompareFunction)(const void* elemAddr1, const void* elemAdd
  * to a piece of auxiliary data passed in as the second argument to HashSetMap.
  */
 
-typedef void (*HashSetMapFunction)(void* elemAddr, void* auxData);
+typedef void (*HashSetMapFunction)(void *elemAddr, void *auxData);
 
 /**
  * Type: HashSetFreeFunction
@@ -62,7 +60,7 @@ typedef void (*HashSetMapFunction)(void* elemAddr, void* auxData);
  * some specific cleanup routine be called.
  */
 
-typedef void (*HashSetFreeFunction)(void* elemAddr);
+typedef void (*HashSetFreeFunction)(void *elemAddr);
 
 /**
  * Type: hashset
@@ -75,12 +73,12 @@ typedef void (*HashSetFreeFunction)(void* elemAddr);
  */
 
 typedef struct {
-    int elemSize;
-    int numBuckets;
-    vector* buckets;
-    HashSetHashFunction hashfn;
-    HashSetCompareFunction cmpfn;
-    HashSetFreeFunction freefn;
+  vector *buckets;
+  int numBuckets;
+  int elemSize;
+  int elemCount;
+  HashSetHashFunction hashfn;
+  HashSetCompareFunction comparefn;
 } hashset;
 
 /**
@@ -89,16 +87,16 @@ typedef struct {
  * Initializes the identified hashset to be empty.  It is assumed that
  * the specified hashset is either raw memory or one previously initialized
  * but later destroyed (using HastSetDispose.)
- *
+ * 
  * The elemSize  parameter specifies the number of bytes that a single element of the
- * table should take up. For example, if you want to store elements of type
+ * table should take up. For example, if you want to store elements of type 
  * Binky, you would pass sizeof(Binky) as this parameter. An assert is
  * raised if this size is less than or equal to 0.
  *
  * The numBuckets parameter specifies the number of buckets that the elements
  * will be partitioned into.  Once a hashset is created, this number does
  * not change.  The numBuckets parameter must be in sync with the behavior of
- * the hashfn, which must return a hash code between 0 and numBuckets - 1.
+ * the hashfn, which must return a hash code between 0 and numBuckets - 1.   
  * The hashfn parameter specifies the function that is called to retrieve the
  * hash code for a given element.  See the type declaration of HashSetHashFunction
  * above for more information.  An assert is raised if numBuckets is less than or
@@ -108,11 +106,11 @@ typedef struct {
  * type declaration for HashSetCompareFunction above for more information.
  *
  * The freefn is the function that will be called on an element that is
- * about to be overwritten (by a new entry in HashSetEnter) or on each element
- * in the table when the entire table is being freed (using HashSetDispose).  This
+ * about to be overwritten (by a new entry in HashSetEnter) or on each element 
+ * in the table when the entire table is being freed (using HashSetDispose).  This 
  * function is your chance to do any deallocation/cleanup required,
- * (such as freeing any pointers contained in the element). The client can pass
- * NULL for the freefn if the elements don't require any handling.
+ * (such as freeing any pointers contained in the element). The client can pass 
+ * NULL for the freefn if the elements don't require any handling. 
  * An assert is raised if either the hash or compare functions are NULL.
  *
  * An assert is raised unless all of the following conditions are met:
@@ -122,8 +120,8 @@ typedef struct {
  *    - comparefn is non-NULL
  */
 
-void HashSetNew(hashset* h, int elemSize, int numBuckets,
-    HashSetHashFunction hashfn, HashSetCompareFunction comparefn, HashSetFreeFunction freefn);
+void HashSetNew(hashset *h, int elemSize, int numBuckets, 
+		HashSetHashFunction hashfn, HashSetCompareFunction comparefn, HashSetFreeFunction freefn);
 
 /**
  * Function: HashSetDispose
@@ -141,16 +139,16 @@ void HashSetNew(hashset* h, int elemSize, int numBuckets,
  * HashSetNew... not recommended.)
  */
 
-void HashSetDispose(hashset* h);
+void HashSetDispose(hashset *h);
 
 /**
  * Function: HashSetCount
  * ----------------------
- * Returns the number of elements residing in
+ * Returns the number of elements residing in 
  * the specified hashset.
  */
 
-int HashSetCount(const hashset* h);
+int HashSetCount(const hashset *h);
 
 /**
  * Function: HashSetEnter
@@ -166,7 +164,7 @@ int HashSetCount(const hashset* h);
  * for the element that is out of the [0, numBuckets) range.
  */
 
-void HashSetEnter(hashset* h, const void* elemAddr);
+void HashSetEnter(hashset *h, const void *elemAddr);
 
 /**
  * Function: HashSetLookup
@@ -184,7 +182,7 @@ void HashSetEnter(hashset* h, const void* elemAddr);
  * for the element that is out of the [0, numBuckets) range.
  */
 
-void* HashSetLookup(const hashset* h, const void* elemAddr);
+void *HashSetLookup(hashset *h, const void *elemAddr);
 
 /**
  * Function: HashSetMap
@@ -201,6 +199,6 @@ void* HashSetLookup(const hashset* h, const void* elemAddr);
  * An assert is raised if the mapping routine is NULL.
  */
 
-void HashSetMap(hashset* h, HashSetMapFunction mapfn, void* auxData);
-
+void HashSetMap(hashset *h, HashSetMapFunction mapfn, void *auxData);
+     
 #endif

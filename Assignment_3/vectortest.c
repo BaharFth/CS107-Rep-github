@@ -109,10 +109,14 @@ static void TestSortSearch(vector *alphabet)
 static void TestAt(vector *alphabet)
 {
   int i;
-  
-  for (i = 0; i < VectorLength(alphabet); i += 2) { // Lowercase every other
+  //printf("\n---lowercaseing every second----\n");
+  int n = alphabet->logLength;
+  for (i = 0; i < n; i += 2) { //
+      //printf("\nLowercase every other\n");
     char *elem = (char *) VectorNth(alphabet, i);
     *elem = tolower(*elem);
+    //PrintChar(elem, stdout);
+    //printf("%d %c ",i,*elem);
   }
   
   fprintf(stdout, "\nAfter lowercase every other letter: ");
@@ -133,22 +137,25 @@ static void TestInsertDelete(vector *alphabet)
 {
   char ch = '-';
   int i;
-  
-  for (i = 3; i < VectorLength(alphabet); i += 4) // Insert dash every 4th char 
-    VectorInsert(alphabet, &ch, i);
+
+  // Insert dash every 4th char 
+  for (i = 3; i < alphabet->logLength; i += 4){
+      VectorInsert(alphabet, &ch, i);
+  }
   fprintf(stdout, "\nAfter insert dashes: ");
   VectorMap(alphabet, PrintChar, stdout);
   
-  for (i = 3; i < VectorLength(alphabet); i += 3) // Delete every 4th char 
+  for (i = 3; i < alphabet->logLength; i += 3) // Delete every 4th char 
     VectorDelete(alphabet, i);
   fprintf(stdout, "\nAfter deleting dashes: ");
   VectorMap(alphabet, PrintChar, stdout);
     
   ch = '!';
-  VectorInsert(alphabet, &ch, VectorLength(alphabet));
-  VectorDelete(alphabet, VectorLength(alphabet) - 1);
+  VectorInsert(alphabet, &ch, alphabet->logLength);
+  VectorDelete(alphabet, alphabet->logLength - 1);
   fprintf(stdout, "\nAfter adding and deleting to very end: ");
   VectorMap(alphabet, PrintChar, stdout);
+  //printf("\n");
 }
 
 /**
@@ -160,21 +167,25 @@ static void TestInsertDelete(vector *alphabet)
 
 static void TestReplace(vector *alphabet)
 {
+    //printf("\n-------TestReplace-------\n");
   int found = 0;
   char toFind = 's', toReplace = '*';
   
-  while (found < VectorLength(alphabet)) {
+  while (found < alphabet->logLength) {
     found = VectorSearch(alphabet, &toFind, CompareChar, found, false);
+    //printf("found at position = %d\n", found);
     if (found == -1) break;
     VectorReplace(alphabet, &toReplace, found);
+    //VectorMap(alphabet, PrintChar, stdout);
   }
   
   fprintf(stdout, "\nAfter changing all %c to %c: ", toFind, toReplace);
   VectorMap(alphabet, PrintChar, stdout);
+  printf("\n");
 }
 
 /** 
- * Function: SimpleTest
+ * Function: vTest
  * --------------------
  * Exercises the vector when it stores characters.
  * Because characaters are small and don't have any
@@ -183,12 +194,12 @@ static void TestReplace(vector *alphabet)
  * even has a prayer of passing more rigorous tests.
  *
  * See the documentation for each of the helper functions
- * to gain a sense as to how SimpleTest works.  The intent
+ * to gain a sense as to how vTest works.  The intent
  * it certainly to try out all of the vector operations so
  * that everything gets exercised.
  */
 
-static void SimpleTest()
+static void vTest()
 {
   fprintf(stdout, " ------------------------- Starting the basic test...\n");
   vector alphabet;
@@ -211,7 +222,7 @@ static void SimpleTest()
  * be introduces once and exactly once.  This happens
  * provided n < d and that both n and d are prime numbers.
  */
-
+/*
 static void InsertPermutationOfNumbers(vector *numbers, long n, long d)
 {
   long k;
@@ -228,6 +239,7 @@ static void InsertPermutationOfNumbers(vector *numbers, long n, long d)
   fprintf(stdout, "[All done]\n");
   fflush(stdout);
 }
+*/
 
 /**
  * Function: LongCompare
@@ -249,7 +261,7 @@ static int LongCompare(const void *vp1, const void *vp2)
  * that the TestSort routine above simply because the vector
  * is much, much bigger.
  */
-
+/*
 static void SortPermutation(vector *vectorToSort)
 {
   long residue, embeddedLong;
@@ -269,7 +281,7 @@ static void SortPermutation(vector *vectorToSort)
   fprintf(stdout, "[Yep, it's sorted]\n");
   fflush(stdout);
 }
-
+*/
 /**
  * Function: DeleteEverythingVerySlowly
  * ------------------------------------
@@ -278,7 +290,7 @@ static void SortPermutation(vector *vectorToSort)
  * within the vector, we ensure that the shifting over of
  * bytes is working properly.
  */
-
+/*
 static void DeleteEverythingVerySlowly(vector *numbers)
 {
   long largestOriginalNumber;
@@ -295,7 +307,7 @@ static void DeleteEverythingVerySlowly(vector *numbers)
   fprintf(stdout, "and we're all done... whew!]\n");
   fflush(stdout);
 }
-
+*/
 /**
  * Function: ChallengingTest
  * -------------------------
@@ -309,6 +321,7 @@ static void DeleteEverythingVerySlowly(vector *numbers)
  * delete all of the elements one by one.
  */
 
+/*
 static const long kLargePrime = 1398269;
 static const long kEvenLargerPrime = 3021377;
 static void ChallengingTest()
@@ -321,7 +334,7 @@ static void ChallengingTest()
   DeleteEverythingVerySlowly(&lotsOfNumbers);
   VectorDispose(&lotsOfNumbers);
 }
-
+*/
 /** 
  * Function: FreeString
  * --------------------
@@ -332,12 +345,13 @@ static void ChallengingTest()
  * they do with strings.)
  */
 
+/*
 static void FreeString(void *elemAddr)
 {
   char *s = *(char **) elemAddr;
   free(s); 
 }
-
+*/
 /** 
  * Function: PrintString
  * ---------------------
@@ -346,13 +360,14 @@ static void FreeString(void *elemAddr)
  * be passed in via the auxData parameter.
  */
 
+/*
 static void PrintString(void *elemAddr, void *auxData)
 {
   char *word = *(char **)elemAddr;
   FILE *fp = (FILE *) auxData;
   fprintf(fp, "\t%s\n", word);
 }
-
+*/
 /**
  * Function: MemoryTest
  * --------------------
@@ -369,6 +384,7 @@ static void PrintString(void *elemAddr, void *auxData)
  * learn concept taught in CS107.
  */
 
+/*
 static void MemoryTest()
 {
   int i;
@@ -392,6 +408,7 @@ static void MemoryTest()
   fprintf(stdout, "Finally, destroying the char * vector.\n");
   VectorDispose(&questionWords);
 }
+*/
 
 /**
  * Function: main
@@ -403,7 +420,7 @@ static void MemoryTest()
 
 int main(int ignored, char **alsoIgnored) 
 {
-    printf("------------B Test-----------\n");
+    printf("------------Integer-----------\n");
     vector v;
     VectorNew(&v, sizeof(int), NULL, 4);
     int arr[10] = { 0,1,2,3,4,5,6,7,8,9 };
@@ -415,10 +432,9 @@ int main(int ignored, char **alsoIgnored)
         toPrint = *(int*)VectorNth(&v,i);
         printf("%d ", toPrint);
     }
-    printf("Test Functions");
-    SimpleTest();
-  //ChallengingTest();
-  //MemoryTest();
+    printf("\n---------Char-----------\n");
+    vTest();
+
 
 
 
