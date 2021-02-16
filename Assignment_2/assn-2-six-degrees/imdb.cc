@@ -24,7 +24,8 @@ bool imdb::good() const
   return !( (actorInfo.fd == -1) || 
 	    (movieInfo.fd == -1) ); 
 }
-//***Bahar:
+
+
 const void* imdb::getActorFileAddress() { return this->actorFile; }
 
 const void* imdb::getFilmFileAddress() { return this->movieFile; }
@@ -67,10 +68,10 @@ void imdb::printActorNames(int count) {
     cout << "The first " << count << " actors are: " << endl;
     int numActors = *(int*)(actorFile);
     if (count > numActors) { count = numActors; };
-    char* record = (char*)actorFile + 4;
+    char* locPointer = (char*)actorFile + 4;
     for (int i = 0; i < count; i++) {
-        record += 4 * i;
-        char* nameLetter = (char*)actorFile + (*(int*)record);
+        locPointer += 4 * i;
+        char* nameLetter = (char*)actorFile + (*(int*)locPointer);
         string name;
         while (*nameLetter != '\0') {
             name += *nameLetter;
@@ -84,10 +85,10 @@ void imdb::printMovieNames(int count) {
     cout << "The first " << count << " Movies are: " << endl;
     int numMovies = *(int*)(actorFile);
     if (count > numMovies) { count = numMovies; };
-    char* record = (char*)movieFile + 4;
+    char* locPointer = (char*)movieFile + 4;
     for (int i = 0; i < count; i++) {
-        record += 4 * i;
-        char* nameLetter = (char*)movieFile + (*(int*)record);
+        locPointer += 4 * i;
+        char* nameLetter = (char*)movieFile + (*(int*)locPointer);
         string name;
         while (*nameLetter != '\0') {
             name += *nameLetter;
@@ -155,92 +156,117 @@ int imdb::moviecmp(const void* s1, const void* s2) {
 int cmpfunc(const void* a, const void* b) {
     return (*(int*)a - *(int*)b);   
 }
+
+
 /*
-struct Key {
-    void* file;
-    void* pkey;
-};
+ *Method: getCredits
+ *input: an artist name in form of string
+ *output: (through pass by reference), a vector containing all
+ *the films of the artist
 */
 bool imdb::getCredits(const string& player, vector <film>& films) const {
-    int numActors = *(int*)(actorFile);
-    void* cplayer = (void*)player.c_str();
+    int numActors = *(int*)(actorFile);     //the number of actors is saved in the first 4 bytes
+    void* cplayer = (void*)player.c_str();  //an adress to the player's name string
 
+    /*struct Key { void* file; void* pkey; };*/
+    //is a struct that saves a file adress and a data address
     struct Key playerKey;
-    /* point to the starting of offsets */
-    playerKey.file = (void*)actorFile;
-    playerKey.pkey = cplayer;
 
+    
+    playerKey.file = (void*)actorFile;      //Adress of the actorFile
+    playerKey.pkey = cplayer;               //the adress of plater name string
+
+
+    //Use bsearch to see if the actor name exists in this file
     void* found = bsearch(
-        &playerKey,  // pointer to the string we are looking for
-        (int*)actorFile + 1, // "array" base of offsets
-        numActors, // array size (number of actors)
-        sizeof(int), // size of array element
-        imdb::playercmp // comparison function
+        &playerKey,                // pointer to the string we are looking for
+        (int*)actorFile + 1,       // "array" base of offsets
+        numActors,                 // array size (number of actors)
+        sizeof(int),               // size of array element
+        imdb::playercmp            // comparison function
     );
 
+    //if actor not found
     if (found == NULL) return false;
 
-    /* using facts about the binary actor file, if player has even
+
+
+    /* If the actor is found, procede to the next steps.
+     * 1- set a pointer to the actor location in file
+
+     * In the actor file, if a player has an even
      * number of characters, it's followed by a extra '\0'. Then a short
      * is there to depict the number of movies the player has acted
      * in. If sum of bytes of actor name and two bytes of number of
      * movies is not divisible by 4, then assume a 2 byte pad and go
      * next appropriate location.
      */
-
-
      
-     /* pointer to actor location in file */
-    char* record = (char*)actorFile + *(int*)found;
-    char* nameLetter = (char*)record;
-    //Print Actor Name
+     /* locPointer: a pointer to our current location */
+    char* locPointer = (char*)actorFile + *(int*)found;
+
+    
+    /*
+    Print Actor Name (only for test):
     string name;
+    char* nameLetter = (char*)locPointer;
     while (*nameLetter != '\0') {
         name += *nameLetter;
         nameLetter++;
     }
-    //cout << "Actor Name in the file is: " << name << "at Location "<< *(int*)found<< endl;
-
-
-
-    /* keep count of bytes from start of record to short */
+    cout << "Actor Name in the file is: " << name << "at Location "<< *(int*)found<< endl;
+    */
+   
+    /* An integer to count the number of bytes from  the start of 
+     * the record to the short containing number of movies
+     */
     int nBytesFromStart = 0;
 
-    /* move to location pointing to number of movies */
+    /* move to the short location pointing to the number of movies */
     if (player.size() % 2 == 0) {
-        record += (player.size() + 2);
+        locPointer += (player.size() + 2);
         nBytesFromStart += (player.size() + 2);
     }
     else {
-        record += player.size() + 1;
+        locPointer += player.size() + 1;
         nBytesFromStart += player.size() + 1;
     }
 
-    short nMovies = *(short*)record;
+
+    short nMovies = *(short*)locPointer;
     nBytesFromStart += 2;
-    record += 2;
+    locPointer += 2;
 
-    /* move to start of movie names */
-    if (nBytesFromStart % 4 != 0) record += 2;
+    /* if the number of bytes containing the name and movie count is not 
+     * divisible by two, pad it up with extra 00 so it is
+    */
+    if (nBytesFromStart % 4 != 0) locPointer += 2;
 
+    /* for all movies of this artist:
+     * 1- save the movie address in the pointer movielocPointer
+     * 2- from the movie file, get the movie name and year and save them
+     *    in a new movie object
+     * 3- push this movie object to the films vector
+    
+    */
     for (short i = 0; i < nMovies; i++) {
         struct film _film;
 
         /* calculate offset into movie file in memory */
-        char* movieRecord = (char*)movieFile + *(int*)record;
-        record += 4;
+        char* movielocPointer = (char*)movieFile + *(int*)locPointer;
+        locPointer += 4;
 
         string title;
-        while (*movieRecord != '\0') {
-            title += *movieRecord;
-            movieRecord++;
+        while (*movielocPointer != '\0') {
+            title += *movielocPointer;
+            movielocPointer++;
         }
 
         /* Skip \0 at end of string */
-        movieRecord++;
+        movielocPointer++;
 
         /* year byte contains an offset from 1900 */
-        int year = *movieRecord + 1900;
+        int year = *movielocPointer + 1900;
 
         _film.title = title;
         _film.year = year;
@@ -251,31 +277,41 @@ bool imdb::getCredits(const string& player, vector <film>& films) const {
 }
 
 
+
+/*Method: getCast
+ *input: a fim& movie
+ *output: (through pass by reference), a vector containing all
+ *that movie's cast
+*/
 bool imdb::getCast(const film& movie, vector <string>& players) const {
 
     //cout << "Movie is " << movie.title << endl;
+
+
+    /* The total number of movies in the file is saved in the first four
+     * digits of the movieFile
+    */
     int nElements = *(int*)movieFile;
 
+    /*struct Key { void* file; void* pkey; };*/
+    //is a struct that saves a file adress and a data address
     struct Key movieKey;
     movieKey.file = (void*)movieFile;
     movieKey.pkey = (void*)&movie;
 
-    void* found = bsearch(
-        &movieKey,  // pointer to key
-        (int*)movieFile + 1, // pointer to base
-        nElements, // number of elements
-        sizeof(int), // size of element
-        imdb::moviecmp // compare two pointer to pointer to c string
-    );
     /*
+     * use bsearch and the imdb::moviecmp to see if the requested movie exists
+     * in the database
+     */
     void* found = bsearch(
-        &playerKey,  // pointer to the string we are looking for
-        (int*)actorFile + 1, // "array" base of offsets
-        numActors, // array size (number of actors)
-        sizeof(int), // size of array element
-        imdb::playercmp // comparison function
+        &movieKey,                  // pointer to key
+        (int*)movieFile + 1,        // pointer to base
+        nElements,                  // number of elements
+        sizeof(int),                // size of element
+        imdb::moviecmp              // compare two pointer to pointer to c string
     );
-    */
+
+    //If the movie was not found...
     if (found == NULL) { 
         cout << "Not Found!" << endl;
         return false;
@@ -283,12 +319,13 @@ bool imdb::getCast(const film& movie, vector <string>& players) const {
 
 
 
-    /* point to movie record in memory */
-    char* record = (char*)movieFile + *(int*)found;
+    /* a pointer to movie record location in memory 
+     * this pointer move with us along the movie record
+    */
+    char* locPointer = (char*)movieFile + *(int*)found;
 
-    
     {
-        char* nameLetter = record;
+        char* nameLetter = locPointer;
         string name;
         while (*nameLetter != '\0') {
             name += *nameLetter;
@@ -301,29 +338,43 @@ bool imdb::getCast(const film& movie, vector <string>& players) const {
     /* skip the number of bytes for movie name and year, if the total
      * number of bytes is odd, skip one more byte
      */
+
     numBytesFromStart += movie.title.size() + 2;
-    record += (movie.title.size() + 2);
+    locPointer += (movie.title.size() + 2);
     if (numBytesFromStart % 2 != 0) {
         numBytesFromStart++;
-        record++;
+        locPointer++;
     }
 
-    short nPlayers = *(short*)record;
+    /* get the number of players and number of bytes from 
+     * movie record start
+     */
+    short nPlayers = *(short*)locPointer;
     numBytesFromStart += 2;
-    record += 2;
+    locPointer += 2;
 
-    /* move to start of movie names */
-    if (numBytesFromStart % 4 != 0) record += 2;
+    /* if the numBytesFrom start is not divisible by 4,
+       move 2 more bytes ahead
+    */
+    if (numBytesFromStart % 4 != 0) locPointer += 2;
+
+
+     /* for all the cast of this movie:
+     * 1- save the  artist in the pointer actorlocPointer
+     * 2- from the actor file, get the actor name 
+     * 3- push this actor name to the actors vector
+
+    */
 
     for (short i = 0; i < nPlayers; i++) {
         /* calculate offset into movie file in memory */
-        char* actorRecord = (char*)actorFile + *(int*)record;
-        record += 4;
+        char* actorlocPointer = (char*)actorFile + *(int*)locPointer;
+        locPointer += 4;
 
         string name;
-        while (*actorRecord != '\0') {
-            name += *actorRecord;
-            actorRecord++;
+        while (*actorlocPointer != '\0') {
+            name += *actorlocPointer;
+            actorlocPointer++;
         }
 
         players.push_back(name);
