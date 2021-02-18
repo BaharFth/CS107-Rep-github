@@ -8,7 +8,7 @@
 const int kNumBuckets = 26;
 
 struct frequency {
-    char ch;		// a particular letter
+    char ch;		    // a particular letter
     int occurrences;	// the number of times it occurs
 };
 
